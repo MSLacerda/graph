@@ -1,0 +1,13 @@
+/* Estilo aqui */
+
+.jumbotron {
+    padding-left: 10px; 
+}
+
+
+.border-ctrl {
+    padding: 10px;
+    margin-left: 5px;
+    background-color: darkslategrey;
+    border-radius: 5px;
+}
