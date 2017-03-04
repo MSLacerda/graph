@@ -52,11 +52,13 @@ angular.module('GrafoApp')
     // kick off first highlight
     highlightNextEle();
 
+
+
     // ---- TRABALHO COMEÇA AQUI ------
 
     // Código para explicar.
 
-    var self = this;
+    var self = this; // AngularJS...
 
     self.lista = []; //Array para armazenar nós.
     alfa = 65;
@@ -68,7 +70,7 @@ angular.module('GrafoApp')
       console.log(j);
       for (var i = 0; i < j; i++) {
         name = String.fromCharCode(alfa); // Transforma o código ascii em letras 
-        alfa++;
+        alfa++; //Acrescenta +1 no código ascii para prox letra
         cy.add([
           { group: "nodes", data: { id: name } }
         ])
@@ -106,14 +108,34 @@ angular.module('GrafoApp')
       _source = $("#noX").val();
       _target = $("#noY").val();
       _weight = $("#peso").val();
-      cy.add([
-        { group: "edges", data: { id: _source + _target, label: _weight, weight: _weight, source: _source, target: _target } }
+      cy.add([ // add aresta ao grafico, "biblioteca"
+        { group: "edges", data: { id: _source+_target, label: _weight, weight: _weight, source: _source, target: _target } }
       ])
 
-      for (var i = 0; i < self.lista.length; i++) {
+      for (var i = 0; i < self.lista.length; i++) { // Percorre a lista de adjacencia para add o no e o peso
         if (self.lista[i].no.nome === _source) {
-          self.lista[i].no.adj.push(_target);
+          self.lista[i].no.adj.push({data:{no:_target, peso:_weight}});
           console.log(self.lista[i]);
+        }
+      }
+
+    }
+
+    // Remover aresta
+    self.deleteEdge = function() {
+      _source = $("#noX").val();
+      _target = $("#noY").val();
+      _weight = $("#peso").val();
+      for (var i = 0; i < self.lista.length; i++) { // Faz um for por todo o grafo, removendo os nós
+        if (self.lista[i].no.nome === _source) {
+          for (var j = 0; j < self.lista[i].no.adj.length; j++){
+            if (self.lista[i].no.adj[j].data.no === _target) {
+              console.log(self.lista[i].no.adj[j].data.no);
+              cy.remove("#" + _source+_target); // remove no do grafico "Biblioteca"
+              _remove = self.lista[i].no.adj.indexOf({data: {no:_target, peso: _weight}}); 
+              self.lista[i].no.adj.splice(_remove, 1); // remove no da lista
+            }
+          }
         }
       }
 
