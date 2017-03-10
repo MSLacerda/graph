@@ -3,7 +3,6 @@ body {
 }
 
 #cy {
-  border: 1px solid grey;
   height: 600px;
   width: 600px;
   position: absolute;
@@ -20,6 +19,10 @@ body {
   top: 1em;
 }
 
+span.badge {
+  color: white !important;
+}
+
 .form-group {
-  color: black !important;
+  color:white !important;
 }

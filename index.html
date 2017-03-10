@@ -5,11 +5,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, minimal-ui">
 
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+  <script src="bower_components/jquery/dist/jquery.min.js"></script>
   <script src="bower_components/angular/angular.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
   <link rel="stylesheet" href="bower_components/bootswatch/simplex/bootstrap.min.css">
-  <script src="http://cytoscape.github.io/cytoscape.js/api/cytoscape.js-latest/cytoscape.min.js"></script>
+  <script src="lib/cytoscape.min.js"></script>
   <script src="js/app.js"></script>
   <link href="style.css" rel="stylesheet" />
   <link href="css/style.css" rel="stylesheet" />
@@ -37,7 +37,8 @@
             <input id="qtdNo" class="form-control" />
             <br>
 
-            <button type="button" ng-click="ctrl.addGrafo()" class="btn btn-info btn-block">Criar grafo</button>
+            <button type="button" id="btnAddGrafo" ng-click="ctrl.addGrafo()" class="btn btn-info btn-block">Criar grafo</button>
+            <button type="button" id="btnAddExemplo" ng-click="ctrl.addExemplo()" class="btn btn-info btn-block">Add Exemplo</button>
             <br>
             <button type="button" ng-click="ctrl.deleteGrafo()" class="btn btn-danger btn-block">Excluir</button>
             <button type="button" ng-click="ctrl.addNo()" class="btn btn-warning btn-block">Add nó</button>
@@ -63,7 +64,10 @@
                 </thead>
                 <tbody>
                   <tr ng-repeat="i in ctrl.lista">
-                    <td>{{i.no.nome}}</td>
+                    <td>N: <div class="badge">{{i.no.nome}}</div> ||
+                        P: <div class="badge">{{i.no.pesoTo}}</div> ||
+                        A: <div class="badge">{{i.no.ant}}</div>
+                    </td>
                     <td><p ng-repeat="j in i.no.adj"> {{j.data.no}} : {{j.data.peso}}<p></td>
                   </tr>
                 </tbody>
@@ -91,6 +95,33 @@
 
           <button ng-click="ctrl.addEdge()" class="btn btn-info btn-block">Add aresta</button>
           <button ng-click="ctrl.deleteEdge()" class="btn btn-danger btn-block">Deletar Aresta</button>
+        </div>
+      </div>
+      <div class="border-ctrl">
+        <div class="form-group">
+          <label for="noInicial">Nó inicial</label>
+          <input type="text" id="noInicial" class="form-control" />
+          <button class="btn btn-info btn-block" ng-click="ctrl.dijkstra()">Iniciar Algoritmo</button>
+          <button class="btn btn-danger btn-block" ng-click="ctrl.reset()">Resetar</button>
+          <table class="table table">
+            <thead>
+              <tr>
+                <th><span class="badge">N</span></th>
+                <th><span class="badge">M</SPAN></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="zitem in ctrl.iteracao track by $index">
+                <td>{{zitem.n}}</td>
+                <td>{{zitem.m}}</td>
+              </tr>
+            </tbody>
+          </table>
+          <label for="de">De</label>
+          <input type="text" id="de" class="form-control" />
+          <label for="noInicial">Para</label>
+          <input type="para" id="para" class="form-control" />
+          <button class="btn btn-info btn-block" ng-click="ctrl.search()">Buscar</button>
         </div>
       </div>
     </div>
