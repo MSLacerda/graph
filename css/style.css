@@ -11,3 +11,57 @@
     background-color: darkslategrey;
     border-radius: 5px;
 }
+
+.panel {
+    background-color: darkslategrey !important;
+}
+
+body { 
+  font: 14px helvetica neue, helvetica, arial, sans-serif;
+}
+
+#botao {
+  position: fixed;
+  z-index: 1;
+  top: 90%; /* 45% como exemplo */
+}
+
+.danger {
+  background-color: rgba(252, 32, 32, 0.5);
+  border: 1px solid rgb(252, 32, 32);
+}
+
+.ok {
+  background-color: rgba(32, 252, 97, 0.5);
+  border: 1px solid rgb(32, 252, 97);
+}
+
+
+
+#cy {
+  height: 600px;
+  width: 600px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 290px;
+  bottom: 0;
+  margin: auto;
+}
+
+#info {
+  color: black ;
+  font-size: 1em;
+  position: absolute;
+  z-index: -1;
+  left: 1em;
+  top: 1em;
+}
+
+span.badge {
+  color: white !important;
+}
+
+.form-group {
+  color:white !important;
+}

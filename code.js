@@ -8,23 +8,29 @@ angular.module('GrafoApp')
       boxSelectionEnabled: false,
       autounselectify: true,
 
+      pan: { x: 300, y: 300 },
+
       style: cytoscape.stylesheet()
         .selector('node')
         .css({
-          'content': 'data(id)'
+          'color': 'white',
+          'content': 'data(id)',
+          'background-color': 'white',
+          'font-weight': 'bold'
         })
         .selector('edge')
         .css({
           'target-arrow-shape': 'triangle',
           'label': 'data(label)',
+          'color': 'white',
           'width': 4,
-          'line-color': '#d1ad0e',
-          'target-arrow-color': '#d1ad0e',
+          'line-color': '#9999ff',
+          'target-arrow-color': '#9999ff',
           'curve-style': 'bezier'
         })
         .selector('.highlighted')
         .css({
-          'background-color': '#61bffc',
+          'background-color': 'red',
           'line-color': '#61bffc',
           'target-arrow-color': '#61bffc',
           'transition-property': 'background-color, line-color, target-arrow-color',
@@ -32,9 +38,9 @@ angular.module('GrafoApp')
         })
         .selector('.way')
         .css({
-          'background-color': '#61bffc',
-          'line-color': '#d1ad0e',
-          'target-arrow-color': '#d1ad0e',
+          'background-color': 'green',
+          'line-color': 'green',
+          'target-arrow-color': 'green',
           'transition-property': 'background-color, line-color, target-arrow-color',
           'transition-duration': '0.5s'
         }),
@@ -52,38 +58,68 @@ angular.module('GrafoApp')
 
     var self = this; // AngularJS...
 
+    self.ok = false;
+    self.msg = "";
+    self.classCtrl = "";
+
+    function exibir(msg, classe, bolean) {
+      self.msg = msg;
+      self.classCtrl = classe;
+      self.ok = true;
+      setTimeout(function () { self.ok = false; console.log("OK") }, 6000);
+    }
+
+    self.centralizar = function () {
+      cy.animate({
+        center: { eles: "#A" }
+      })
+        .delay(0500)
+        .animate({
+          zoom: 1
+        })
+    }
+
     self.lista = []; //Array para armazenar nós.
     self.priorityList = []; // Array de prioridades
-    self.iteracao = [];
-    self.pares = [];
-    alfa = 65;
+    self.iteracao = []; // Array para exibir iteração na view
+    self.pares = [];  //  Array que contem os pares resultante no algoritmo
+    var list = [];
+    var listAux = 0;
+    var alfa = 65;
 
-    function min(myArray) {
+    //  Função para retornar item de menor peso da lista
+    function min() {
       var lowest = Number.POSITIVE_INFINITY;
+      var objMin = -1;
       var tmp;
-
-      for (var i = myArray.length - 1; i >= 0; i--) {
-        tmp = myArray[i].no.pesoTo;
+      for (var i = 0; i < self.priorityList.length; i++) {
+        tmp = self.priorityList[i].no.pesoTo;
         if (tmp < lowest) {
           lowest = tmp;
-          objMin = myArray.indexOf(myArray[i]);
+          objMin = self.priorityList.indexOf(self.priorityList[i]);
         }
       }
-
       return objMin;
 
     }
 
+    function clear() {
+      $("#noX").val("");
+      $("#noY").val("");
+      $("#peso").val("");
+    }
+
+    // Função para ativar e desativar "Buttons"
     function enableDisable(a) {
-      if (a === 1){
+      if (a === 1) {
         $("#btnAddGrafo").removeAttr('disabled');
         $("#btnAddExemplo").removeAttr('disabled');
       }
-      if(a === 0){
+      if (a === 0) {
         $("#btnAddGrafo").attr('disabled', 'disabled');
         $('#btnAddExemplo').attr('disabled', 'disabled');
-      }  
-    } 
+      }
+    }
 
     //Cria o grafo  
     self.addGrafo = function () {
@@ -97,6 +133,9 @@ angular.module('GrafoApp')
         ])
         self.lista.push({ no: { nome: name, pesoTo: null, ant: null, adj: [] } });
       }
+      cy.animate({
+        center: { eles: '#A' }
+      })
     }
 
     //Remove o grafo
@@ -122,21 +161,51 @@ angular.module('GrafoApp')
       self.lista.push({ no: { nome: name, pesoTo: null, ant: null, adj: [] } });
     }
 
+    self.deleteNo = function () {
+      _no = $("#noToDelete").val();
+      for (i = 0; i < self.lista.length; i++) {
+        if (self.lista[i].no.nome === _no) {
+          self.lista.splice(i, 1);
+        }
+        for (j = 0; j < self.lista[i].no.adj.length; j++) {
+          if (self.lista[i].no.adj[j].data.no === _no)
+            self.lista[i].no.adj.splice(j, 1);
+        }
+      }
+      cy.remove('#' + _no);
+    }
+
 
     // Add uma aresta
     self.addEdge = function () {
       _source = $("#noX").val();
       _target = $("#noY").val();
       _weight = $("#peso").val();
-      cy.add([ // add aresta ao grafico, "biblioteca"
-        { group: "edges", data: { id: _source + _target, label: _weight, weight: _weight, source: _source, target: _target } }
-      ])
+      _noSaida = -1;
+      _noChegada = -1;
       for (var i = 0; i < self.lista.length; i++) { // Percorre a lista de adjacencia para add o no e o peso
         if (self.lista[i].no.nome === _source) {
-          self.lista[i].no.adj.push({ data: { no: _target, peso: _weight } });
+          _noSaida = i;
+        }
+        if (self.lista[i].no.nome === _target) {
+          _noChegada = i;
         }
       }
-
+      if (_noSaida !== -1) {
+        if (_noChegada !== -1) {
+          self.lista[_noSaida].no.adj.push({ data: { no: _target, peso: _weight } });
+          cy.add([ // add aresta ao grafico, "biblioteca"
+            { group: "edges", data: { id: _source + _target, label: _weight, weight: _weight, source: _source, target: _target } }
+          ])
+          exibir("Aresta Adicionada", "well ok");
+        } else {
+          exibir("Nó de chegada não encontrado!", "well danger");
+        }
+      } else {
+        exibir("Nó de Saida não encontrado!", "well danger");
+      }
+      $("#noX").focus();
+      clear();
     }
 
     // Remover aresta
@@ -144,31 +213,34 @@ angular.module('GrafoApp')
       _source = $("#noX").val();
       _target = $("#noY").val();
       _weight = $("#peso").val();
-      for (var i = 0; i < self.lista.length; i++) { // Faz um for por todo o grafo, removendo os nós
+      for (var i = 0; i < self.lista.length; i++) {
         if (self.lista[i].no.nome === _source) {
           for (var j = 0; j < self.lista[i].no.adj.length; j++) {
             if (self.lista[i].no.adj[j].data.no === _target) {
               cy.remove("#" + _source + _target); // remove do grafico "Biblioteca"
               _remove = self.lista[i].no.adj.indexOf(
-                {data: { no: _target, peso: _weight}}
-                );
-              self.lista[i].no.adj.splice(_remove, 1); // remove no da lista
+                { data: { no: _target, peso: _weight } }
+              );
+              self.lista[i].no.adj.splice(_remove, 1); // remove aresta da lista
             }
           }
         }
       }
+      $("#noX").focus();
+      clear();
     }
 
     self.addExemplo = function () {
-      for (var i = 0; i < 5; i ++){
+      enableDisable(0);
+      for (var i = 0; i < 5; i++) {
         name = String.fromCharCode(alfa);
         alfa++;
-        self.lista.push({no:{ nome: name, pesoTo: null, ant: null, adj: [] } });
-         cy.add([
+        self.lista.push({ no: { nome: name, pesoTo: null, ant: null, adj: [] } });
+        cy.add([
           { group: "nodes", data: { id: name } }
         ])
       }
-      cy.add([ // add aresta ao grafico, "biblioteca"
+      cy.add([ // add arestas ao grafico, "biblioteca"
         { group: "edges", data: { id: "AB", label: 1, weight: 1, source: "A", target: "B" } },
         { group: "edges", data: { id: "AE", label: 10, weight: 10, source: "A", target: "E" } },
         { group: "edges", data: { id: "AD", label: 3, weight: 3, source: "A", target: "D" } },
@@ -177,36 +249,43 @@ angular.module('GrafoApp')
         { group: "edges", data: { id: "DC", label: 2, weight: 2, source: "D", target: "C" } },
         { group: "edges", data: { id: "DE", label: 6, weight: 6, source: "D", target: "E" } }
       ])
-      for(var j = 0; j < self.lista.length; j++){
-        if(self.lista[j].no.nome === "A"){
-          self.lista[j].no.adj.push({ data: { no: "B", peso:1 } });
-          self.lista[j].no.adj.push({ data: { no: "E", peso:10 } });
-          self.lista[j].no.adj.push({ data: { no: "D", peso:3 } });
+      for (var j = 0; j < self.lista.length; j++) {
+        if (self.lista[j].no.nome === "A") {
+          self.lista[j].no.adj.push({ data: { no: "B", peso: 1 } });
+          self.lista[j].no.adj.push({ data: { no: "E", peso: 10 } });
+          self.lista[j].no.adj.push({ data: { no: "D", peso: 3 } });
         }
-        if(self.lista[j].no.nome === "B") {
-          self.lista[j].no.adj.push({ data: { no: "C" , peso: 5 } });
+        if (self.lista[j].no.nome === "B") {
+          self.lista[j].no.adj.push({ data: { no: "C", peso: 5 } });
         }
-        if(self.lista[j].no.nome === "C") {
-          self.lista[j].no.adj.push({ data: { no: "E", peso: 1} });
+        if (self.lista[j].no.nome === "C") {
+          self.lista[j].no.adj.push({ data: { no: "E", peso: 1 } });
         }
-        if(self.lista[j].no.nome === "D"){
-          self.lista[j].no.adj.push({ data: { no: "C", peso: 2} });
-          self.lista[j].no.adj.push({ data: { no: "E", peso: 6} });
+        if (self.lista[j].no.nome === "D") {
+          self.lista[j].no.adj.push({ data: { no: "C", peso: 2 } });
+          self.lista[j].no.adj.push({ data: { no: "E", peso: 6 } });
         }
       }
     }
 
-    self.reset = function () {
-      cy.edges().addClass("way");
+    function reset() {
+      cy.edges().classes();
+      cy.nodes().css('background-color', 'white');
+
+      self.pares = [];
+      self.iteracao = [];
+
+      self.list = list.splice();
     }
 
-    function initialize(_init) {
-      for (var i = 0; i < self.lista.length; i++) {
-        self.lista[i].no.pesoTo = Number.POSITIVE_INFINITY;
-        self.lista[i].no.ant = null;
+    function initialize(_inicial) {
 
-        if (self.lista[i].no.nome === _init) {
-          self.lista[i].no.pesoTo = 0;
+      for (var i = 0; i < self.lista.length; i++) {         //
+        self.lista[i].no.pesoTo = Number.POSITIVE_INFINITY; //  Inicializa todos os nós com peso infinito
+        self.lista[i].no.ant = null;                        //  e anterior igual a null
+
+        if (self.lista[i].no.nome === _inicial) {
+          self.lista[i].no.pesoTo = 0;                      // O nó inicial tem como peso 0
           self.lista[i].no.ant = null;
         }
       }
@@ -214,98 +293,95 @@ angular.module('GrafoApp')
       self.priorityList = self.lista.slice(); // Copia os elementos de lista para priorityList
 
     }
-
-    function drawWay(i, j, k) {
-      var timer = setTimeout(function () {
-        cy.$("#" + i + j).addClass('way');
-        self.iteracao.push({n: i, m: j});
-      }, k);
-    }
-
-    function drawSearch(i, j, k) {
-      var timer = setTimeout(function () {
-        cy.$("#" + i + j).addClass('highlighted');
-        self.iteracao.push({n: i, m: j});
-        $scope.$apply();
-      }, k);
-    }
-
-    self.search = function () {
-      _de = $("#de").val();
-      _para = $("#para").val();
-      aux = _para;
-      i = 0;
-      c = 0;
-      while (true) {
-        for(var i = 0; i<self.pares.length; i++){
-          //console.log(_de, _para);
-          if(self.pares[i].par.a === _de && self.pares[i].par.p === _para) {
-            //console.log(_de, _para);
-            //console.log(self.pares[i]);
-            break;
-          }
-          if(self.pares[i].par.p === _para){
-            _para = self.pares[i].par.a;
-          }
-          
-        }
-        if (c > Math.pow(self.pares.length, 2)) {
-          break;
-        }
-        c++;
-      }
-
+    function drawSearch(i, j) {
+      self.iteracao.push({ n: i, m: j });
+      $scope.$apply();
+      cy.$("#" + i + j).addClass('way');
     }
 
     function relax(atual, adja, peso, count) {
-      //console.log(atual, adja, peso);
       for (var i = 0; i < self.lista.length; i++) {
-        if (self.lista[i].no.nome == adja.no) {
-          id = i;
-        }
+        if (self.lista[i].no.nome == adja.no) {     //
+          id = i;                                   //  Procura na lista principal o Adj
+        }                                           //
       }
 
-      pesoAdja = self.lista[id].no.pesoTo;
-      x = parseInt(atual.pesoTo);
-      y = parseInt(peso);
-
-      if (pesoAdja > x + y) {
+      pesoAdja = self.lista[id].no.pesoTo;          //  Captura o peso atual do no adjacente
+      x = parseInt(atual.pesoTo); // Converte o peso do no atual                    
+      y = parseInt(peso);         // e o peso da aresta para inteiro
+      if (pesoAdja > x + y) {             //  Faz o relaxamento
         self.lista[id].no.pesoTo = x + y;
         self.lista[id].no.ant = atual.nome;
-        //drawSearch(atual.nome, adja.no, count);
       }
 
     }
 
-    function walk() {
-      count = 1000;
-      for (var i = 0; i < self.lista.length; i++){
-        self.pares.push({par:{p:self.lista[i].no.nome,a:self.lista[i].no.ant}});
-      }
-      for (var j = 0; j < self.pares.length; j++){
-        drawSearch(self.pares[j].par.a,self.pares[j].par.p, count);
-        count+=1000;
-      }
-    }
-    self.dijkstra = function () {
-      _init = $("#noInicial").val();
-      initialize(_init);
-      count = 2000; //  Contador para timer
-      i = 0;
-      while (self.priorityList.length != 0) {
-        minIndex = min(self.priorityList);
-        //self.iteracao.push(self.priorityList[minIndex].no.nome);
-        for (var i = 0; i < self.priorityList[minIndex].no.adj.length; i++) {
-          _adja = self.priorityList[minIndex].no.adj[i].data;
-          _peso = self.priorityList[minIndex].no.adj[i].data.peso;
-          _atual = self.priorityList[minIndex].no;
-          //drawWay(_atual.nome, _adja.no, count);
-          relax(_atual, _adja, _peso, count)
-          count += 2000;
+    function teste(no) {
+      for(var i = 0; i < self.lista.length; i++){
+        if (self.lista[i].no.ant == no){
+          drawSearch(no,self.lista[i].no.nome);
+          setTimeout(teste, 1000, self.lista[i].no.nome);
         }
-        self.priorityList.splice(minIndex, 1);
       }
-      walk();
+      
+
     }
+
+    function walk(inicial) {
+      count = 1000;   // Contador para timer
+      for (var i = 0; i < self.lista.length; i++) {
+        if (!self.lista[i].no.ant && self.lista[i].no.nome != inicial) {
+          continue;
+        }
+        self.pares.push({ par: { p: self.lista[i].no.nome, a: self.lista[i].no.ant } });
+
+        x = parseInt(self.lista[i].no.pesoTo);
+        if (x == 0)
+          cy.$("#" + self.lista[i].no.nome).css('background-color', '#ff0202');
+        if (x >= 1)
+          cy.$("#" + self.lista[i].no.nome).css('background-color', '#fc2d2d');
+        if (x >= 2)
+          cy.$("#" + self.lista[i].no.nome).css('background-color', '#fc5858');
+        if (x >= 3)
+          cy.$("#" + self.lista[i].no.nome).css('background-color', '#f27474');
+        if (x >= 5)
+          cy.$("#" + self.lista[i].no.nome).css('background-color', '#ffa0a0');
+        if (x >= 7)
+          cy.$("#" + self.lista[i].no.nome).css('background-color', '#fcb8b8');
+        if (x >= 9)
+          cy.$("#" + self.lista[i].no.nome).css('background-color', '#ffd3d3');
+      }
+      teste(inicial);
+    }
+
+    function dijkstra(inicial) {
+      if (listAux === 0)
+        list = self.lista.slice();
+      else
+        reset();
+      listAux++;
+      initialize(inicial);              //  Inicializa o grafo
+      while (self.priorityList.length !== 0) {
+        var a = min();
+        if (a == -1) {
+          break;
+        }
+        noV = self.priorityList.splice(a, 1); // Pega o indice do elemento de menor peso da lista de prioridades
+        for (var i = 0; i < noV[0].no.adj.length; i++) {
+          cy.$('#' + noV[0].no.nome + noV[0].no.adj[i].data.no).addClass('highlighted')
+          _adja = noV[0].no.adj[i].data;         //
+          _peso = noV[0].no.adj[i].data.peso;    // Caminha sobre as adjancencias do nó e faz o relaxamento
+          _atual = noV[0].no;                    //
+          relax(_atual, _adja, _peso)
+        }
+      }
+      walk(inicial);                 // Ao terminar o algoritmo inicia para desenhar
+    }
+
+    cy.on('tap', 'node', function (evt) {
+      dijkstra(evt.cyTarget.id());
+    });
+
+
 
   })
